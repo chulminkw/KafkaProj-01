@@ -19,14 +19,13 @@ public class ConsumerWakeup {
 
     public static void main(String[] args) {
 
-        String topicName = "simple-topic";
+        String topicName = "pizza-topic";
 
         Properties props = new Properties();
         props.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "192.168.56.101:9092");
         props.setProperty(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         props.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         props.setProperty(ConsumerConfig.GROUP_ID_CONFIG, "group_01");
-        //props.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
 
         KafkaConsumer<String, String> kafkaConsumer = new KafkaConsumer<String, String>(props);
         kafkaConsumer.subscribe(List.of(topicName));
@@ -49,9 +48,10 @@ public class ConsumerWakeup {
         try {
             while (true) {
                 ConsumerRecords<String, String> consumerRecords = kafkaConsumer.poll(Duration.ofMillis(1000));
+
                 for (ConsumerRecord record : consumerRecords) {
-                    logger.info("record key:{}, record value:{}, partition:{}, record offset:{}",
-                            record.key(), record.value(), record.partition(), record.offset());
+                    logger.info("record key:{},  partition:{}, record offset:{} record value:{}",
+                            record.key(), record.partition(), record.offset(), record.value());
                 }
             }
         }catch(WakeupException e) {
