@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Random;
 
-public class PizzaFileAppender {
+public class FileUtilAppend {
     // 피자 메뉴를 설정. getRandomValueFromList()에서 임의의 피자명을 출력하는 데 사용.
     private static final List<String> pizzaNames = List.of("Potato Pizza", "Cheese Pizza",
             "Cheese Garlic Pizza", "Super Supreme", "Peperoni");
@@ -23,7 +23,7 @@ public class PizzaFileAppender {
             "O001", "P001", "Q001");
 
     private static int orderSeq = 5000;
-    public PizzaFileAppender() {}
+    public FileUtilAppend() {}
 
     //인자로 피자명 또는 피자가게 List와 Random 객체를 입력 받아서 random한 피자명 또는 피자 가게 명을 반환.
     private String getRandomValueFromList(List<String> list, Random random) {
@@ -78,14 +78,14 @@ public class PizzaFileAppender {
     }
 
     public static void main(String[] args) {
-        PizzaFileAppender pizzaMessage = new PizzaFileAppender();
+        FileUtilAppend fileUtilAppend = new FileUtilAppend();
         // seed값을 고정하여 Random 객체와 Faker 객체를 생성.
         long seed = 2022;
         Random random = new Random(seed);
         Faker faker = Faker.instance(random);
         String filePath = "C:\\Users\\q\\IdeaProjects\\my-app\\KafkaProj-01\\practice\\src\\main\\resources\\pizza_append.txt";
         for(int i=0; i<100; i++) {
-            pizzaMessage.writeMessage(filePath, faker, random);
+            fileUtilAppend.writeMessage(filePath, faker, random);
             System.out.println("###### iteration:"+i+" file write is done");
             try {
                 Thread.sleep(10000);
