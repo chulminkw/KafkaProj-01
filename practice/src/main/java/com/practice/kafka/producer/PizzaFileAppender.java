@@ -1,10 +1,8 @@
-package com.example.kafka;
+package com.practice.kafka.producer;
 
 import com.github.javafaker.Faker;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -12,7 +10,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Random;
 
-public class PizzaMessageTemp {
+public class PizzaFileAppender {
     // 피자 메뉴를 설정. getRandomValueFromList()에서 임의의 피자명을 출력하는 데 사용.
     private static final List<String> pizzaNames = List.of("Potato Pizza", "Cheese Pizza",
             "Cheese Garlic Pizza", "Super Supreme", "Peperoni");
@@ -24,7 +22,8 @@ public class PizzaMessageTemp {
             "D001", "E001", "F001", "G001", "H001", "I001", "J001", "K001", "L001", "M001", "N001",
             "O001", "P001", "Q001");
 
-    public PizzaMessageTemp() {}
+    private static int orderSeq = 5000;
+    public PizzaFileAppender() {}
 
     //인자로 피자명 또는 피자가게 List와 Random 객체를 입력 받아서 random한 피자명 또는 피자 가게 명을 반환.
     private String getRandomValueFromList(List<String> list, Random random) {
@@ -56,22 +55,43 @@ public class PizzaMessageTemp {
         return messageMap;
     }
 
+    public void writeMessage(String filePath, Faker faker, Random random) {
+        try {
+            File file = new File(filePath);
+            if(!file.exists()) {
+                file.createNewFile();
+            }
+
+            FileWriter fileWriter = new FileWriter(file, true);
+            BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+            PrintWriter printWriter = new PrintWriter(bufferedWriter);
+
+            for(int i=0; i < 50; i++) {
+                HashMap<String, String> message = produce_msg(faker, random, orderSeq++);
+                printWriter.println(message.get("key")+"," + message.get("message"));
+            }
+            printWriter.close();
+
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void main(String[] args) {
-        PizzaMessageTemp pizzaMessage = new PizzaMessageTemp();
+        PizzaFileAppender pizzaMessage = new PizzaFileAppender();
         // seed값을 고정하여 Random 객체와 Faker 객체를 생성.
         long seed = 2022;
         Random random = new Random(seed);
         Faker faker = Faker.instance(random);
-        try {
-            File file = new File("pizza_sample.txt");
-            PrintWriter printWriter = new PrintWriter(file);
-            for (int i = 0; i < 1000; i++) {
-                HashMap<String, String> message = pizzaMessage.produce_msg(faker, random, i);
-                printWriter.println(message.get("key")+"," + message.get("message"));
+        String filePath = "C:\\Users\\q\\IdeaProjects\\my-app\\KafkaProj-01\\practice\\src\\main\\resources\\pizza_append.txt";
+        for(int i=0; i<100; i++) {
+            pizzaMessage.writeMessage(filePath, faker, random);
+            System.out.println("###### iteration:"+i+" file write is done");
+            try {
+                Thread.sleep(10000);
+            }catch(InterruptedException e) {
+                e.printStackTrace();
             }
-        }catch(IOException e) {
-            e.printStackTrace();
         }
-
     }
 }
