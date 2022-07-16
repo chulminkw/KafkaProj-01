@@ -22,13 +22,12 @@ public class FileToDBConsumer<K extends Serializable, V extends Serializable> {
     protected KafkaConsumer<K, V> kafkaConsumer;
     protected List<String> topics;
 
-    private Connection connection;
-
-    public FileToDBConsumer(Properties consumerProps, List<String> topics, Properties dbProps) {
+    private OrderDBHandler orderDBHandler;
+    public FileToDBConsumer(Properties consumerProps, List<String> topics,
+                            OrderDBHandler orderDBHandler) {
         this.kafkaConsumer = new KafkaConsumer<K, V>(consumerProps);
         this.topics = topics;
-        connection = getDBConnection(dbProps.getProperty("url"),
-                dbProps.getProperty("user"), dbProps.getProperty("password"));
+        this.orderDBHandler = orderDBHandler;
     }
     public void initConsumer() {
         this.kafkaConsumer.subscribe(this.topics);
@@ -53,19 +52,9 @@ public class FileToDBConsumer<K extends Serializable, V extends Serializable> {
 
     }
 
-    private Connection getDBConnection(String url, String user, String password) {
-        Connection conn = null;
-        try {
-            conn = DriverManager.getConnection(url, user, password);
-        } catch(SQLException e) {
-            logger.error(e.getMessage());
-        }
-        return conn;
-    }
-
     private void processRecord(ConsumerRecord<K, V> record) {
         OrderDTO orderDTO = makeOrderDTO(record);
-        insertOrder(orderDTO);
+        orderDBHandler.insertOrder(orderDTO);
     }
 
     private OrderDTO makeOrderDTO(ConsumerRecord<K,V> record) {
@@ -78,31 +67,10 @@ public class FileToDBConsumer<K extends Serializable, V extends Serializable> {
         return orderDTO;
     }
 
-    private void insertOrder(OrderDTO orderDTO)  {
-        String INSERT_SQL = "INSERT INTO orders " +
-                "(ord_id, shop_id, menu_name, user_name, phone_number, address, order_time) "+
-                "(?, ?, ?, ?, ?, ?, ?)";
-        try {
-            PreparedStatement pstmt = this.connection.prepareStatement(INSERT_SQL);
-            pstmt.setString(1, orderDTO.orderId);
-            pstmt.setString(2, orderDTO.shopId);
-            pstmt.setString(3, orderDTO.menuName);
-            pstmt.setString(4, orderDTO.userName);
-            pstmt.setString(5, orderDTO.phoneNumber);
-            pstmt.setString(6, orderDTO.address);
-            pstmt.setTimestamp(7, Timestamp.valueOf(orderDTO.orderTime));
-            logger.info("insert sql:" + INSERT_SQL);
-
-            pstmt.executeUpdate();
-        } catch(SQLException e) {
-            logger.error(e.getMessage());
-        }
-
-    }
 
     private void processRecords(ConsumerRecords<K, V> records) {
         List<OrderDTO> orders = makeOrders(records);
-        insertOrders(orders);
+        orderDBHandler.insertOrders(orders);
     }
 
     private List<OrderDTO> makeOrders(ConsumerRecords<K,V> records) {
@@ -114,30 +82,6 @@ public class FileToDBConsumer<K extends Serializable, V extends Serializable> {
         return orders;
     }
 
-    private void insertOrders(List<OrderDTO> orders) {
-        String INSERT_SQL = "INSERT INTO orders " +
-                "(ord_id, shop_id, menu_name, user_name, phone_number, address, order_time) "+
-                "(?, ?, ?, ?, ?, ?, ?)";
-        try {
-            PreparedStatement pstmt = this.connection.prepareStatement(INSERT_SQL);
-            for(OrderDTO orderDTO : orders) {
-                pstmt.setString(1, orderDTO.orderId);
-                pstmt.setString(2, orderDTO.shopId);
-                pstmt.setString(3, orderDTO.menuName);
-                pstmt.setString(4, orderDTO.userName);
-                pstmt.setString(5, orderDTO.phoneNumber);
-                pstmt.setString(6, orderDTO.address);
-                pstmt.setTimestamp(7, Timestamp.valueOf(orderDTO.orderTime));
-
-                pstmt.addBatch();
-            }
-            pstmt.executeUpdate();
-
-        } catch(SQLException e) {
-            logger.info(e.getMessage());
-        }
-
-    }
 
     public void pollConsumes(long durationMillis, String commitMode) {
         try {
@@ -198,16 +142,17 @@ public class FileToDBConsumer<K extends Serializable, V extends Serializable> {
         props.setProperty(ConsumerConfig.GROUP_ID_CONFIG, "group_03");
         props.setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
 
-        Properties dbProps = new Properties();
-        dbProps.setProperty("url", "jdbc:postgresql://localhost/postgres");
-        dbProps.setProperty("user", "postgres");
-        dbProps.setProperty("password", "postgres");
+        String url = "jdbc:postgresql://192.168.56.101:5432/postgres";
+        String user = "postgres";
+        String password = "postgres";
+        OrderDBHandler orderDBHandler = new OrderDBHandler(url, user, password);
 
-        FileToDBConsumer<String, String> baseConsumer = new FileToDBConsumer<String, String>(props, List.of(topicName), dbProps);
-        baseConsumer.initConsumer();
+        FileToDBConsumer<String, String> fileToDBConsumer = new
+                FileToDBConsumer<String, String>(props, List.of(topicName), orderDBHandler);
+        fileToDBConsumer.initConsumer();
         String commitMode = "async";
 
-        baseConsumer.pollConsumes(100, commitMode);
+        fileToDBConsumer.pollConsumes(100, commitMode);
 
     }
 

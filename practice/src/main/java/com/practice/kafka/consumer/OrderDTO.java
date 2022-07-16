@@ -11,7 +11,7 @@ public class OrderDTO {
     public String address;
     public LocalDateTime orderTime;
 
-    public OrderDTO(String orderId, String shopId, String menuName, String userName, 
+    public OrderDTO(String orderId, String shopId, String menuName, String userName,
                     String phoneNumber, String address, LocalDateTime orderTime) {
         this.orderId = orderId;
         this.shopId = shopId;
