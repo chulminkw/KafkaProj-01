@@ -50,12 +50,12 @@ public class FileToDBConsumer<K extends Serializable, V extends Serializable> {
 
     }
 
-    private void processRecord(ConsumerRecord<K, V> record) {
+    private void processRecord(ConsumerRecord<K, V> record) throws Exception {
         OrderDTO orderDTO = makeOrderDTO(record);
         orderDBHandler.insertOrder(orderDTO);
     }
 
-    private OrderDTO makeOrderDTO(ConsumerRecord<K,V> record) {
+    private OrderDTO makeOrderDTO(ConsumerRecord<K,V> record) throws Exception {
         String messageValue = (String)record.value();
         logger.info("###### messageValue:" + messageValue);
         String[] tokens = messageValue.split(",");
@@ -67,12 +67,12 @@ public class FileToDBConsumer<K extends Serializable, V extends Serializable> {
     }
 
 
-    private void processRecords(ConsumerRecords<K, V> records) {
+    private void processRecords(ConsumerRecords<K, V> records) throws Exception{
         List<OrderDTO> orders = makeOrders(records);
         orderDBHandler.insertOrders(orders);
     }
 
-    private List<OrderDTO> makeOrders(ConsumerRecords<K,V> records) {
+    private List<OrderDTO> makeOrders(ConsumerRecords<K,V> records) throws Exception {
         List<OrderDTO> orders = new ArrayList<>();
         //records.forEach(record -> orders.add(makeOrderDTO(record)));
         for(ConsumerRecord<K, V> record : records) {
@@ -96,7 +96,11 @@ public class FileToDBConsumer<K extends Serializable, V extends Serializable> {
                 ConsumerRecords<K, V> consumerRecords = this.kafkaConsumer.poll(Duration.ofMillis(durationMillis));
                 logger.info("consumerRecords count:" + consumerRecords.count());
                 if(consumerRecords.count() > 0) {
-                    processRecords(consumerRecords);
+                    try {
+                        processRecords(consumerRecords);
+                    } catch(Exception e) {
+                        logger.error(e.getMessage());
+                    }
                 }
 //                if(consumerRecords.count() > 0) {
 //                    for (ConsumerRecord<K, V> consumerRecord : consumerRecords) {
