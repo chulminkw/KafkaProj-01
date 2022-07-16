@@ -1,6 +1,7 @@
 package com.practice.kafka.consumer;
 
 import org.apache.kafka.clients.consumer.*;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.slf4j.Logger;
@@ -55,6 +56,7 @@ public class BaseConsumer<K extends Serializable, V extends Serializable> {
         records.forEach(record -> processRecord(record));
     }
 
+
     public void pollConsumes(long durationMillis, String commitMode) {
         try {
             while (true) {
@@ -75,17 +77,19 @@ public class BaseConsumer<K extends Serializable, V extends Serializable> {
             closeConsumer();
         }
     }
+
     private void pollCommitAsync(long durationMillis) throws WakeupException, Exception {
         ConsumerRecords<K, V> consumerRecords = this.kafkaConsumer.poll(Duration.ofMillis(durationMillis));
         processRecords(consumerRecords);
-        this.kafkaConsumer.commitAsync((offsets, exception) -> {
-            if (exception != null) {
+        this.kafkaConsumer.commitAsync( (offsets, exception) -> {
+            if(exception != null) {
                 logger.error("offsets {} is not completed, error:{}", offsets, exception.getMessage());
             }
-        });
-    }
 
-    private void pollCommitSync(long durationMillis) throws WakeupException, Exception {
+        });
+
+    }
+   private void pollCommitSync(long durationMillis) throws WakeupException, Exception {
         ConsumerRecords<K, V> consumerRecords = this.kafkaConsumer.poll(Duration.ofMillis(durationMillis));
         processRecords(consumerRecords);
         try {

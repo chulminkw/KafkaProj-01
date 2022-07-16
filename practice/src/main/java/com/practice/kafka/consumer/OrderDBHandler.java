@@ -5,10 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Locale;
-import java.util.Properties;
 
 public class OrderDBHandler {
     public static final Logger logger = LoggerFactory.getLogger(OrderDBHandler.class.getName());
