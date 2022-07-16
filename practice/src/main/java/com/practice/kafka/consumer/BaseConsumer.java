@@ -14,8 +14,9 @@ import java.util.Properties;
 
 public class BaseConsumer<K extends Serializable, V extends Serializable> {
     public static final Logger logger = LoggerFactory.getLogger(BaseConsumer.class.getName());
-    protected KafkaConsumer<K, V> kafkaConsumer;
-    protected List<String> topics;
+
+    private KafkaConsumer<K, V> kafkaConsumer;
+    private List<String> topics;
 
     public BaseConsumer(Properties consumerProps, List<String> topics) {
         this.kafkaConsumer = new KafkaConsumer<K, V>(consumerProps);
