@@ -1,14 +1,11 @@
 package com.practice.kafka.consumer;
 
 import org.apache.kafka.clients.consumer.*;
-import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
-import java.io.IOException;
 import java.io.Serializable;
 import java.time.Duration;
 import java.util.List;
@@ -77,20 +74,17 @@ public class BaseConsumer<K extends Serializable, V extends Serializable> {
             closeConsumer();
         }
     }
-    protected void pollCommitAsync(long durationMillis) throws WakeupException, Exception {
+    private void pollCommitAsync(long durationMillis) throws WakeupException, Exception {
         ConsumerRecords<K, V> consumerRecords = this.kafkaConsumer.poll(Duration.ofMillis(durationMillis));
         processRecords(consumerRecords);
-        this.kafkaConsumer.commitAsync(new OffsetCommitCallback() {
-            @Override
-            public void onComplete(Map<TopicPartition, OffsetAndMetadata> offsets, Exception exception) {
-                if(exception != null) {
-                    logger.error("offsets {} is not completed, error:{}", offsets, exception.getMessage());
-                }
+        this.kafkaConsumer.commitAsync((offsets, exception) -> {
+            if (exception != null) {
+                logger.error("offsets {} is not completed, error:{}", offsets, exception.getMessage());
             }
         });
     }
 
-    protected void pollCommitSync(long durationMillis) throws WakeupException, Exception {
+    private void pollCommitSync(long durationMillis) throws WakeupException, Exception {
         ConsumerRecords<K, V> consumerRecords = this.kafkaConsumer.poll(Duration.ofMillis(durationMillis));
         processRecords(consumerRecords);
         try {
@@ -102,7 +96,7 @@ public class BaseConsumer<K extends Serializable, V extends Serializable> {
             logger.error(e.getMessage());
         }
     }
-    protected void closeConsumer() {
+    public void closeConsumer() {
         this.kafkaConsumer.close();
     }
 
@@ -113,7 +107,7 @@ public class BaseConsumer<K extends Serializable, V extends Serializable> {
         props.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "192.168.56.101:9092");
         props.setProperty(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         props.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-        props.setProperty(ConsumerConfig.GROUP_ID_CONFIG, "group_03");
+        props.setProperty(ConsumerConfig.GROUP_ID_CONFIG, "file-group");
         props.setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
 
         BaseConsumer<String, String> baseConsumer = new BaseConsumer<String, String>(props, List.of(topicName));
@@ -121,6 +115,7 @@ public class BaseConsumer<K extends Serializable, V extends Serializable> {
         String commitMode = "async";
 
         baseConsumer.pollConsumes(100, commitMode);
+        baseConsumer.closeConsumer();
 
     }
 

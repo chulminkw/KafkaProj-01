@@ -71,6 +71,7 @@ public class OrderDBHandler {
     public void close()
     {
         try {
+            logger.info("###### OrderDBHandler is closing");
             this.insertPrepared.close();
             this.connection.close();
         }catch(SQLException e) {
