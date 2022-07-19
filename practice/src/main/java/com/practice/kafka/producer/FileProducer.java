@@ -58,7 +58,7 @@ public class FileProducer {
                         value.append(tokens[i]);
                     }
                 }
-
+//"ord0, P001, Cheese Pizza, Erick Koelpin, (235) 592-3785 x9190, 6373 Gulgowski Path, 2022-07-14 12:09:33"
                 sendMessage(kafkaProducer, topicName, key, value.toString());
 
             }
@@ -68,6 +68,7 @@ public class FileProducer {
         }
     }
 
+    //"ord0, P001, Cheese Pizza, Erick Koelpin, (235) 592-3785 x9190, 6373 Gulgowski Path, 2022-07-14 12:09:33"
     private static void sendMessage(KafkaProducer<String, String> kafkaProducer, String topicName, String key, String value) {
         ProducerRecord<String, String> producerRecord = new ProducerRecord<>(topicName, key,value);
         logger.info("key:{}, value:{}", key, value);

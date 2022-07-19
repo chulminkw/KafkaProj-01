@@ -12,14 +12,14 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Properties;
 
-public class OrderSerdeConsumer<K extends Serializable, V extends Serializable> {
-    public static final Logger logger = LoggerFactory.getLogger(OrderSerdeConsumer.class.getName());
+public class OrderSerdeConsumerV2 {
+    public static final Logger logger = LoggerFactory.getLogger(OrderSerdeConsumerV2.class.getName());
 
-    private KafkaConsumer<K, V> kafkaConsumer;
-    private List<String> topics;
+    private KafkaConsumer<String, OrderModel> kafkaConsumer;
+    private List<java.lang.String> topics;
 
-    public OrderSerdeConsumer(Properties consumerProps, List<String> topics) {
-        this.kafkaConsumer = new KafkaConsumer<K, V>(consumerProps);
+    public OrderSerdeConsumerV2(Properties consumerProps, List<java.lang.String> topics) {
+        this.kafkaConsumer = new KafkaConsumer<String, OrderModel>(consumerProps);
         this.topics = topics;
     }
 
@@ -28,7 +28,7 @@ public class OrderSerdeConsumer<K extends Serializable, V extends Serializable> 
         shutdownHookToRuntime(this.kafkaConsumer);
     }
 
-    private void shutdownHookToRuntime(KafkaConsumer<K, V> kafkaConsumer) {
+    private void shutdownHookToRuntime(KafkaConsumer<String, OrderModel> kafkaConsumer) {
         //main thread
         Thread mainThread = Thread.currentThread();
 
@@ -46,17 +46,17 @@ public class OrderSerdeConsumer<K extends Serializable, V extends Serializable> 
 
     }
 
-    private void processRecord(ConsumerRecord<K, V> record) {
+    private void processRecord(ConsumerRecord<String, OrderModel> record) {
         logger.info("record key:{},  partition:{}, record offset:{} record value:{}",
                 record.key(), record.partition(), record.offset(), record.value());
     }
 
-    private void processRecords(ConsumerRecords<K, V> records) {
+    private void processRecords(ConsumerRecords<String, OrderModel> records) {
         records.forEach(record -> processRecord(record));
     }
 
 
-    public void pollConsumes(long durationMillis, String commitMode) {
+    public void pollConsumes(long durationMillis, java.lang.String commitMode) {
         try {
             while (true) {
                 if (commitMode.equals("sync")) {
@@ -78,7 +78,7 @@ public class OrderSerdeConsumer<K extends Serializable, V extends Serializable> 
     }
 
     private void pollCommitAsync(long durationMillis) throws WakeupException, Exception {
-        ConsumerRecords<K, V> consumerRecords = this.kafkaConsumer.poll(Duration.ofMillis(durationMillis));
+        ConsumerRecords<String, OrderModel> consumerRecords = this.kafkaConsumer.poll(Duration.ofMillis(durationMillis));
         processRecords(consumerRecords);
         this.kafkaConsumer.commitAsync( (offsets, exception) -> {
             if(exception != null) {
@@ -89,7 +89,7 @@ public class OrderSerdeConsumer<K extends Serializable, V extends Serializable> 
 
     }
    private void pollCommitSync(long durationMillis) throws WakeupException, Exception {
-        ConsumerRecords<K, V> consumerRecords = this.kafkaConsumer.poll(Duration.ofMillis(durationMillis));
+        ConsumerRecords<String, OrderModel> consumerRecords = this.kafkaConsumer.poll(Duration.ofMillis(durationMillis));
         processRecords(consumerRecords);
         try {
             if(consumerRecords.count() > 0 ) {
@@ -104,8 +104,8 @@ public class OrderSerdeConsumer<K extends Serializable, V extends Serializable> 
         this.kafkaConsumer.close();
     }
 
-    public static void main(String[] args) {
-        String topicName = "order-serde-topic";
+    public static void main(java.lang.String[] args) {
+        java.lang.String topicName = "order-serde-topic";
 
         Properties props = new Properties();
         props.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "192.168.56.101:9092");
@@ -114,12 +114,12 @@ public class OrderSerdeConsumer<K extends Serializable, V extends Serializable> 
         props.setProperty(ConsumerConfig.GROUP_ID_CONFIG, "order-serde-group");
         props.setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
 
-        OrderSerdeConsumer<String, OrderModel> baseConsumer = new OrderSerdeConsumer<String, OrderModel>(props, List.of(topicName));
-        baseConsumer.initConsumer();
-        String commitMode = "async";
+        OrderSerdeConsumerV2 orderSerdeConsumerV2 = new OrderSerdeConsumerV2(props, List.of(topicName));
+        orderSerdeConsumerV2.initConsumer();
+        java.lang.String commitMode = "async";
 
-        baseConsumer.pollConsumes(100, commitMode);
-        baseConsumer.closeConsumer();
+        orderSerdeConsumerV2.pollConsumes(100, commitMode);
+        orderSerdeConsumerV2.closeConsumer();
 
     }
 

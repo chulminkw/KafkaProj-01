@@ -15,13 +15,14 @@ public class OrderDeserializer implements Deserializer<OrderModel> {
 
     @Override
     public OrderModel deserialize(String topic, byte[] data) {
-        OrderModel order = null;
+        OrderModel orderModel = null;
+
         try {
-            order = objectMapper.readValue(data, OrderModel.class);
+            orderModel = objectMapper.readValue(data, OrderModel.class);
         } catch (IOException e) {
-            logger.error("Deserializer error:" + e.getMessage());
-            return null;
+            logger.error("Object mapper deserialization error" + e.getMessage());
         }
-        return order;
+
+        return orderModel;
     }
 }
