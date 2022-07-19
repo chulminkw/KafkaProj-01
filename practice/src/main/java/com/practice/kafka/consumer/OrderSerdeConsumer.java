@@ -1,26 +1,25 @@
 package com.practice.kafka.consumer;
 
+
+import com.practice.kafka.model.OrderModel;
 import org.apache.kafka.clients.consumer.*;
-import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
-import java.io.Serializable;
 import java.time.Duration;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 
-public class BaseConsumerV1<K extends Serializable, V extends Serializable> implements Closeable {
-    public static final Logger logger = LoggerFactory.getLogger(BaseConsumerV1.class.getName());
-    private KafkaConsumer<K, V> kafkaConsumer;
-    private List<String> topics;
+public class OrderSerdeConsumer {
+    public static final Logger logger = LoggerFactory.getLogger(OrderSerdeConsumer.class.getName());
 
-    public BaseConsumerV1(Properties consumerProps, List<String> topics) {
-        this.kafkaConsumer = new KafkaConsumer<K, V>(consumerProps);
+    private KafkaConsumer<String, OrderModel> kafkaConsumer;
+    private List<java.lang.String> topics;
+
+    public OrderSerdeConsumer(Properties consumerProps, List<java.lang.String> topics) {
+        this.kafkaConsumer = new KafkaConsumer<String, OrderModel>(consumerProps);
         this.topics = topics;
     }
 
@@ -29,7 +28,7 @@ public class BaseConsumerV1<K extends Serializable, V extends Serializable> impl
         shutdownHookToRuntime(this.kafkaConsumer);
     }
 
-    private void shutdownHookToRuntime(KafkaConsumer<K, V> kafkaConsumer) {
+    private void shutdownHookToRuntime(KafkaConsumer<String, OrderModel> kafkaConsumer) {
         //main thread
         Thread mainThread = Thread.currentThread();
 
@@ -47,19 +46,17 @@ public class BaseConsumerV1<K extends Serializable, V extends Serializable> impl
 
     }
 
-    private void processRecord(ConsumerRecord<K, V> record) {
+    private void processRecord(ConsumerRecord<String, OrderModel> record) {
         logger.info("record key:{},  partition:{}, record offset:{} record value:{}",
                 record.key(), record.partition(), record.offset(), record.value());
     }
 
-    private void processRecords(ConsumerRecords<K, V> records) {
-//        for (ConsumerRecord record : records) {
-//            processRecord(record);
-//       }
+    private void processRecords(ConsumerRecords<String, OrderModel> records) {
         records.forEach(record -> processRecord(record));
     }
 
-    public void pollConsumes(long durationMillis, String commitMode) {
+
+    public void pollConsumes(long durationMillis, java.lang.String commitMode) {
         try {
             while (true) {
                 if (commitMode.equals("sync")) {
@@ -76,24 +73,23 @@ public class BaseConsumerV1<K extends Serializable, V extends Serializable> impl
             logger.info("##### commit sync before closing");
             kafkaConsumer.commitSync();
             logger.info("finally consumer is closing");
-            close();
+            closeConsumer();
         }
     }
-    private void pollCommitAsync(long durationMillis) throws WakeupException, Exception {
-        ConsumerRecords<K, V> consumerRecords = this.kafkaConsumer.poll(Duration.ofMillis(durationMillis));
-        processRecords(consumerRecords);
-        this.kafkaConsumer.commitAsync(new OffsetCommitCallback() {
-            @Override
-            public void onComplete(Map<TopicPartition, OffsetAndMetadata> offsets, Exception exception) {
-                if(exception != null) {
-                    logger.error("offsets {} is not completed, error:{}", offsets, exception.getMessage());
-                }
-            }
-        });
-    }
 
-    private void pollCommitSync(long durationMillis) throws WakeupException, Exception {
-        ConsumerRecords<K, V> consumerRecords = this.kafkaConsumer.poll(Duration.ofMillis(durationMillis));
+    private void pollCommitAsync(long durationMillis) throws WakeupException, Exception {
+        ConsumerRecords<String, OrderModel> consumerRecords = this.kafkaConsumer.poll(Duration.ofMillis(durationMillis));
+        processRecords(consumerRecords);
+        this.kafkaConsumer.commitAsync( (offsets, exception) -> {
+            if(exception != null) {
+                logger.error("offsets {} is not completed, error:{}", offsets, exception.getMessage());
+            }
+
+        });
+
+    }
+   private void pollCommitSync(long durationMillis) throws WakeupException, Exception {
+        ConsumerRecords<String, OrderModel> consumerRecords = this.kafkaConsumer.poll(Duration.ofMillis(durationMillis));
         processRecords(consumerRecords);
         try {
             if(consumerRecords.count() > 0 ) {
@@ -103,29 +99,27 @@ public class BaseConsumerV1<K extends Serializable, V extends Serializable> impl
         } catch(CommitFailedException e) {
             logger.error(e.getMessage());
         }
-
-
     }
-    @Override
-    public void close() {
+    public void closeConsumer() {
         this.kafkaConsumer.close();
     }
 
-    public static void main(String[] args) {
-        String topicName = "file-topic";
+    public static void main(java.lang.String[] args) {
+        java.lang.String topicName = "file-topic";
 
         Properties props = new Properties();
         props.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "192.168.56.101:9092");
         props.setProperty(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         props.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-        props.setProperty(ConsumerConfig.GROUP_ID_CONFIG, "group_03");
+        props.setProperty(ConsumerConfig.GROUP_ID_CONFIG, "file-group");
         props.setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
 
-        BaseConsumerV1<String, String> baseConsumer = new BaseConsumerV1<String, String>(props, List.of(topicName));
-        baseConsumer.initConsumer();
+        OrderSerdeConsumer orderConsumer = new OrderSerdeConsumer(props, List.of(topicName));
+        orderConsumer.initConsumer();
         String commitMode = "async";
 
-        baseConsumer.pollConsumes(100, commitMode);
+        orderConsumer.pollConsumes(100, commitMode);
+        orderConsumer.closeConsumer();
 
     }
 
