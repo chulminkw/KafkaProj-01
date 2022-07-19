@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.nio.Buffer;
 import java.util.Properties;
 
 public class FileProducer {

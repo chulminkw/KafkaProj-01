@@ -1,7 +1,6 @@
 package com.practice.kafka.consumer;
 
 import org.apache.kafka.clients.consumer.*;
-import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.slf4j.Logger;
@@ -10,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import java.io.Serializable;
 import java.time.Duration;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 
 public class BaseConsumer<K extends Serializable, V extends Serializable> {
