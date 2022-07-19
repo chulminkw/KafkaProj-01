@@ -15,10 +15,10 @@ import java.util.Properties;
 public class OrderSerDeToDBConsumer {
     public static final Logger logger = LoggerFactory.getLogger(OrderSerDeToDBConsumer.class.getName());
     protected KafkaConsumer<String, OrderModel> kafkaConsumer;
-    protected List<java.lang.String> topics;
+    protected List<String> topics;
 
     private OrderSerdeDBHandler orderDBHandler;
-    public OrderSerDeToDBConsumer(Properties consumerProps, List<java.lang.String> topics,
+    public OrderSerDeToDBConsumer(Properties consumerProps, List<String> topics,
                                   OrderSerdeDBHandler orderDBHandler) {
         this.kafkaConsumer = new KafkaConsumer<String, OrderModel>(consumerProps);
         this.topics = topics;
@@ -73,7 +73,7 @@ public class OrderSerDeToDBConsumer {
     }
 
 
-    public void pollConsumes(long durationMillis, java.lang.String commitMode) {
+    public void pollConsumes(long durationMillis, String commitMode) {
         if (commitMode.equals("sync")) {
             pollCommitSync(durationMillis);
         } else {
@@ -146,8 +146,8 @@ public class OrderSerDeToDBConsumer {
         this.orderDBHandler.close();
     }
 
-    public static void main(java.lang.String[] args) {
-        java.lang.String topicName = "file-topic";
+    public static void main(String[] args) {
+        String topicName = "file-topic";
 
         Properties props = new Properties();
         props.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "192.168.56.101:9092");
@@ -156,9 +156,9 @@ public class OrderSerDeToDBConsumer {
         props.setProperty(ConsumerConfig.GROUP_ID_CONFIG, "file-group-new");
         props.setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
 
-        java.lang.String url = "jdbc:postgresql://192.168.56.101:5432/postgres";
-        java.lang.String user = "postgres";
-        java.lang.String password = "postgres";
+        String url = "jdbc:postgresql://192.168.56.101:5432/postgres";
+        String user = "postgres";
+        String password = "postgres";
         OrderSerdeDBHandler orderDBHandler = new OrderSerdeDBHandler(url, user, password);
 
         OrderSerDeToDBConsumer orderSerDeToDBConsumer = new

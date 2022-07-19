@@ -16,9 +16,9 @@ public class OrderSerdeConsumer {
     public static final Logger logger = LoggerFactory.getLogger(OrderSerdeConsumer.class.getName());
 
     private KafkaConsumer<String, OrderModel> kafkaConsumer;
-    private List<java.lang.String> topics;
+    private List<String> topics;
 
-    public OrderSerdeConsumer(Properties consumerProps, List<java.lang.String> topics) {
+    public OrderSerdeConsumer(Properties consumerProps, List<String> topics) {
         this.kafkaConsumer = new KafkaConsumer<String, OrderModel>(consumerProps);
         this.topics = topics;
     }
@@ -56,7 +56,7 @@ public class OrderSerdeConsumer {
     }
 
 
-    public void pollConsumes(long durationMillis, java.lang.String commitMode) {
+    public void pollConsumes(long durationMillis, String commitMode) {
         try {
             while (true) {
                 if (commitMode.equals("sync")) {
@@ -104,8 +104,8 @@ public class OrderSerdeConsumer {
         this.kafkaConsumer.close();
     }
 
-    public static void main(java.lang.String[] args) {
-        java.lang.String topicName = "file-topic";
+    public static void main(String[] args) {
+        String topicName = "file-topic";
 
         Properties props = new Properties();
         props.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "192.168.56.101:9092");
