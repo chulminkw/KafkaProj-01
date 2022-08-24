@@ -95,8 +95,6 @@ public class PizzaProducerCustomPartitioner {
 
         String topicName = "pizza-topic-partitioner";
 
-        DefaultPartitioner
-
         //KafkaProducer configuration setting
         // null, "hello world"
 
