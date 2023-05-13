@@ -17,7 +17,7 @@ public class OrderSerializer implements Serializer<OrderModel> {
         byte[] serializedOrder = null;
 
         try {
-            objectMapper.writeValueAsBytes(order);
+            serializedOrder = objectMapper.writeValueAsBytes(order);
         } catch (JsonProcessingException e) {
             logger.error("Json processing exception:" + e.getMessage());
         }
